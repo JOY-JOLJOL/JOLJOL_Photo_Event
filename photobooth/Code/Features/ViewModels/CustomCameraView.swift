@@ -29,19 +29,6 @@ struct CustomCameraView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         Coordinator(viewModel: viewModel)
     }
-    
-    //    private func checkCameraAuthorization(completion: @escaping (Bool) -> Void) {
-    //        switch AVCaptureDevice.authorizationStatus(for: .video) {
-    //        case .authorized:
-    //            completion(true)
-    //        case .notDetermined:
-    //            AVCaptureDevice.requestAccess(for: .video) { granted in
-    //                completion(granted)
-    //            }
-    //        default:
-    //            completion(false)
-    //        }
-    //    }
     class Coordinator: NSObject, AVCapturePhotoCaptureDelegate {
         var viewModel: CameraViewModel // Coordinator가 참조하는 CameraViewModel 객체
         let captureSession = AVCaptureSession() // 카메라 캡처 세션
@@ -51,7 +38,6 @@ struct CustomCameraView: UIViewRepresentable {
             self.viewModel = viewModel
             super.init()
         }
-        
         // 카메라 세션을 설정하는 메서드
         func setupCameraSession(for view: UIView) {
             // 카메라 세션의 preset을 사진으로 설정
@@ -120,20 +106,16 @@ struct CustomCameraView: UIViewRepresentable {
             DispatchQueue.main.async {
                 print("Function called")
                 guard self.viewModel.captureCount < 4 else {
-                    // 이미 4장의 사진을 캡처했다면, 타이머를 종료하고 이미지 합치기 작업을 진행합니다.
+                    // 이미 4장의 사진을 캡쳐했다면, 타이머 종료 및 이미지 병합
                     self.viewModel.timer?.invalidate()
                     self.viewModel.timer = nil
                     self.viewModel.mergedImage = self.viewModel.mergeImages()
                     return
                 }
                 
-                // 캡처된 이미지를 좌우 반전시킨 후 배열에 추가합니다.
-                if let flippedImage = image.withHorizontallyFlippedOrientation() {
-                    self.viewModel.capturedImages.append(flippedImage)
-                    print("Image added to captured images: \(flippedImage)")
-                } else {
-                    print("Failed to flip image horizontally.")
-                }
+                // 캡처된 이미지를 배열에 추가합니다.
+                self.viewModel.capturedImages.append(image)
+                print("Image added to captured images: \(image)")
                 self.viewModel.captureCount += 1
                 
                 // 4장의 이미지가 모두 캡처되었는지 다시 확인하고, 모두 캡처되었다면 이미지를 합치는 작업을 진행합니다.
@@ -143,13 +125,5 @@ struct CustomCameraView: UIViewRepresentable {
             }
         }
 
-    }
-}
-
-extension UIImage {
-    // UIImage를 좌우 반전시키는 함수
-    func withHorizontallyFlippedOrientation() -> UIImage? {
-        guard let cgImage = self.cgImage else { return nil }
-        return UIImage(cgImage: cgImage, scale: self.scale, orientation: .leftMirrored)
     }
 }
